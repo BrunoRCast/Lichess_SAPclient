@@ -1,0 +1,1706 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lichess Chess Client v2.3</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a2e;
+            color: #b8b8b8;
+            font-family: 'Orbitron', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 480px;
+            width: 100%;
+            background: #242442;
+            border-radius: 12px;
+            border: 1px solid #3a3a5c;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            margin-bottom: 100px;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #6c9bd1;
+            text-shadow: 0 0 8px rgba(108, 155, 209, 0.4);
+            margin-bottom: 8px;
+        }
+        
+        .version {
+            text-align: center;
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .lcd-display {
+            background: #1e1e3f;
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 15px 0;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .lcd-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 98%, rgba(108, 155, 209, 0.05) 100%);
+            background-size: 2px 2px;
+            pointer-events: none;
+            border-radius: 6px;
+        }
+        
+        .lcd-line {
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6c9bd1;
+            text-shadow: 0 0 6px rgba(108, 155, 209, 0.6);
+            line-height: 1.3;
+            min-height: 1.3em;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3a3a5c, #2d2d4a);
+            border: 1px solid #4a4a6a;
+            color: #b8b8b8;
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5c);
+            border-color: #6c9bd1;
+            color: #6c9bd1;
+            transform: translateY(-1px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 0 8px rgba(108, 155, 209, 0.3);
+        }
+        
+        .btn.primary {
+            background: linear-gradient(135deg, #4a6ba3, #3a5a93);
+            border-color: #6c9bd1;
+            color: #ffffff;
+        }
+        
+        .btn.danger {
+            background: linear-gradient(135deg, #8b4a4a, #7a3a3a);
+            border-color: #c67676;
+            color: #c67676;
+        }
+        
+        .move-history {
+            background: #1e1e3f;
+            border: 1px solid #4a4a6a;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 15px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .move-history h3 {
+            color: #6c9bd1;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .move-list {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            color: #b8b8b8;
+            line-height: 1.5;
+        }
+        
+        .move-pair {
+            margin-bottom: 4px;
+        }
+        
+        .move-number {
+            color: #888;
+            margin-right: 8px;
+        }
+        
+        .move-white, .move-black {
+            margin-right: 12px;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+        
+        .move-white {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .move-black {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .settings-panel {
+            background: #2d2d4a;
+            border: 1px solid #4a4a6a;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .settings-panel.active {
+            display: block;
+        }
+        
+        .input-group {
+            margin-bottom: 16px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #6c9bd1;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            background: #1e1e3f;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            color: #6c9bd1;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #6c9bd1;
+            box-shadow: 0 0 6px rgba(108, 155, 209, 0.3);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.online {
+            background: #5cb85c;
+            box-shadow: 0 0 4px rgba(92, 184, 92, 0.4);
+        }
+        
+        .status-indicator.offline {
+            background: #d9534f;
+            box-shadow: 0 0 4px rgba(217, 83, 79, 0.4);
+        }
+        
+        .status-indicator.waiting {
+            background: #f0ad4e;
+            box-shadow: 0 0 4px rgba(240, 173, 78, 0.4);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .move-input {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .move-input input {
+            flex: 1;
+            padding: 10px;
+            background: #1e1e3f;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            color: #6c9bd1;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-align: center;
+            text-transform: lowercase;
+        }
+        
+        .move-input input:focus {
+            outline: none;
+            border-color: #6c9bd1;
+            box-shadow: 0 0 6px rgba(108, 155, 209, 0.3);
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .color-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .color-white, .color-black {
+            padding: 4px 12px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        
+        .color-white {
+            background: linear-gradient(135deg, #f0f0f0, #c0c0c0);
+            color: #333;
+            border: 1px solid #888;
+        }
+        
+        .color-black {
+            background: linear-gradient(135deg, #333, #000);
+            color: #f0f0f0;
+            border: 1px solid #444;
+        }
+        
+        .color-active {
+            box-shadow: 0 0 10px rgba(108, 155, 209, 0.8);
+            transform: scale(1.05);
+        }
+        
+        .debug-info {
+            background: #1e1e3f;
+            border: 1px solid #4a4a6a;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.7rem;
+            color: #888;
+            max-height: 100px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .debug-info.active {
+            display: block;
+        }
+        
+        .debug-line {
+            font-family: monospace;
+            margin-bottom: 2px;
+            word-break: break-all;
+        }
+        
+        .token-help {
+            background: #2d2d4a;
+            border: 1px solid #4a4a6a;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 0.8rem;
+            color: #b8b8b8;
+        }
+        
+        .token-help h4 {
+            color: #6c9bd1;
+            margin-bottom: 8px;
+        }
+        
+        .token-help ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .token-help li {
+            margin-bottom: 5px;
+        }
+        
+        /* Botões físicos simulados */
+        .physical-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #242442, #1a1a2e);
+            border-top: 1px solid #4a4a6a;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            z-index: 1000;
+        }
+        
+        .physical-btn {
+            background: linear-gradient(135deg, #3a3a5c, #2d2d4a);
+            border: 1px solid #4a4a6a;
+            border-radius: 8px;
+            color: #b8b8b8;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .physical-btn:active {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5c);
+            border-color: #6c9bd1;
+            color: #6c9bd1;
+            transform: scale(0.95);
+            box-shadow: 0 0 8px rgba(108, 155, 209, 0.3);
+        }
+        
+        .physical-btn .btn-main {
+            font-size: 1rem;
+            font-weight: 900;
+        }
+        
+        .physical-btn .btn-sub {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 600px) {
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 1.6rem;
+            }
+            
+            .container {
+                padding: 15px;
+                margin-bottom: 80px;
+            }
+            
+            .physical-buttons {
+                padding: 8px;
+            }
+            
+            .physical-btn {
+                padding: 10px 6px;
+                font-size: 0.8rem;
+            }
+            
+            .physical-btn .btn-main {
+                font-size: 0.9rem;
+            }
+            
+            .physical-btn .btn-sub {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">LICHESS CHESS</h1>
+        <div class="version">Client v2.3</div>
+        
+        <div class="lcd-display">
+            <div class="lcd-line" id="lcd-line1">LICHESS CHESS</div>
+            <div class="lcd-line" id="lcd-line2">CLIENT V2.3</div>
+        </div>
+        
+        <!-- Indicador de Cor -->
+        <div id="color-indicator" class="color-indicator hidden">
+            <div id="white-indicator" class="color-white">BRANCAS</div>
+            <span>VS</span>
+            <div id="black-indicator" class="color-black">PRETAS</div>
+        </div>
+        
+        <!-- Menu Principal -->
+        <div id="main-menu" class="buttons-grid">
+            <button class="btn primary" onclick="selectHumanMode()">A1 HUMANO</button>
+            <button class="btn primary" onclick="selectBotMode()">E5 BOTS</button>
+            <button class="btn" onclick="toggleSettings()">CONFIG</button>
+            <button class="btn" onclick="showStatus()">STATUS</button>
+        </div>
+        
+        <!-- Seleção de Bot -->
+        <div id="bot-selection" class="hidden">
+            <div class="buttons-grid">
+                <button class="btn" onclick="previousBot()">← ANTERIOR</button>
+                <button class="btn primary" onclick="startBotGame()">C3 JOGAR</button>
+                <button class="btn" onclick="nextBot()">B2 PRÓXIMO →</button>
+                <button class="btn" onclick="backToMainMenu()">VOLTAR</button>
+            </div>
+        </div>
+        
+        <!-- Controles do Jogo -->
+        <div id="game-controls" class="hidden">
+            <div class="move-input">
+                <input type="text" id="move-input" placeholder="e2e4" maxlength="5" 
+                       onkeypress="handleMoveInput(event)" style="text-transform: lowercase;">
+                <button class="btn primary" onclick="sendMove()">E5 ENVIAR</button>
+                <button class="btn" onclick="clearMove()">A1 LIMPAR</button>
+            </div>
+            <div class="game-controls">
+                <button class="btn danger" onclick="resignGame()">DESISTIR</button>
+                <button class="btn" onclick="backToMainMenu()">MENU</button>
+            </div>
+        </div>
+        
+        <!-- Histórico de Movimentos -->
+        <div class="move-history">
+            <h3><span class="status-indicator offline" id="connection-status"></span>HISTÓRICO DE LANCES</h3>
+            <div class="move-list" id="move-list">Nenhuma partida iniciada</div>
+        </div>
+        
+        <!-- Painel de Configurações -->
+        <div id="settings-panel" class="settings-panel">
+            <div class="input-group">
+                <label for="token-input">Token da API do Lichess:</label>
+                <input type="password" id="token-input" placeholder="lip_..." value="">
+            </div>
+            
+            <div class="token-help">
+                <h4>COMO OBTER UM TOKEN:</h4>
+                <ol>
+                    <li>Acesse <a href="https://lichess.org/login" target="_blank" style="color: #6c9bd1;">lichess.org/login</a></li>
+                    <li>Faça login na sua conta</li>
+                    <li>Vá em <strong>Perfil → Preferências → API</strong></li>
+                    <li>Clique em <strong>"Criar um token de acesso"</strong></li>
+                    <li>Marque apenas <strong>"board:play"</strong> e <strong>"board:play:bot"</strong></li>
+                    <li>Clique em <strong>"Criar"</strong> e copie o token</li>
+                </ol>
+                <p><strong>Importante:</strong> O token deve começar com <code>lip_</code> e ter cerca de 40 caracteres.</p>
+            </div>
+            
+            <div class="buttons-grid">
+                <button class="btn primary" onclick="saveToken()">SALVAR</button>
+                <button class="btn" onclick="toggleSettings()">CANCELAR</button>
+                <button class="btn" onclick="testToken()">TESTAR</button>
+                <button class="btn" onclick="clearToken()">LIMPAR</button>
+            </div>
+        </div>
+        
+        <!-- Debug Info -->
+        <div id="debug-info" class="debug-info">
+            <div id="debug-content"></div>
+        </div>
+    </div>
+    
+    <!-- Botões físicos simulados -->
+    <div class="physical-buttons">
+        <button class="physical-btn" data-button="0">
+            <span class="btn-main">A</span>
+            <span class="btn-sub">1</span>
+        </button>
+        <button class="physical-btn" data-button="1">
+            <span class="btn-main">B</span>
+            <span class="btn-sub">2</span>
+        </button>
+        <button class="physical-btn" data-button="2">
+            <span class="btn-main">C</span>
+            <span class="btn-sub">3</span>
+        </button>
+        <button class="physical-btn" data-button="3">
+            <span class="btn-main">D</span>
+            <span class="btn-sub">4</span>
+        </button>
+        <button class="physical-btn" data-button="4">
+            <span class="btn-main">E</span>
+            <span class="btn-sub">5</span>
+        </button>
+        <button class="physical-btn" data-button="5">
+            <span class="btn-main">F</span>
+            <span class="btn-sub">6</span>
+        </button>
+        <button class="physical-btn" data-button="6">
+            <span class="btn-main">G</span>
+            <span class="btn-sub">7</span>
+        </button>
+        <button class="physical-btn" data-button="7">
+            <span class="btn-main">H</span>
+            <span class="btn-sub">8</span>
+        </button>
+    </div>
+
+    <script>
+        // Estado do sistema
+        let currentState = 'MODE_SELECTION';
+        let gameMode = 'HUMAN';
+        let selectedBotIndex = 0;
+        let gameId = '';
+        let myColor = '';
+        let myUserId = '';
+        let isMyTurn = false;
+        let gameActive = false;
+        let currentMove = '';
+        let letterMode = true;
+        let moveHistory = [];
+        let lichessToken = '';
+        let debugEnabled = true; // Ativar para ver logs de debug
+        
+        const BUTTON_CHARS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const BUTTON_NUMS = ['1', '2', '3', '4', '5', '6', '7', '8'];
+        const CONFIRM_BUTTON = 4; // E5
+        const CLEAR_BUTTON = 0;   // A1
+        const HUMAN_MODE_BUTTON = 0;  // A1
+        const BOT_MODE_BUTTON = 4;    // E5
+        const SELECT_BOT_BUTTON = 1;  // B2
+        const START_GAME_BUTTON = 2;  // C3
+        
+        // Configuração dos bots
+        const availableBots = [
+            {username: 'stockfish', displayName: 'Stockfish', level: 1},
+            {username: 'stockfish', displayName: 'Stockfish', level: 3},
+            {username: 'stockfish', displayName: 'Stockfish', level: 4},
+            {username: 'stockfish', displayName: 'Stockfish', level: 6},
+            {username: 'stockfish', displayName: 'Stockfish', level: 8},
+            {username: 'maia1', displayName: 'Maia Lv1', level: 1},
+            {username: 'maia5', displayName: 'Maia Lv5', level: 3},
+            {username: 'maia9', displayName: 'Maia Lv9', level: 5},
+            {username: 'fairy-stockfish', displayName: 'Fairy-SF', level: 8},
+            {username: 'random-mover', displayName: 'Random', level: 1}
+        ];
+        
+        // Inicialização
+        window.onload = function() {
+            loadToken();
+            initPhysicalButtons();
+            updateLCD('LICHESS CHESS', 'CLIENT V2.3');
+            
+            // Testar conexão básica
+            testLichessConnection();
+            
+            setTimeout(() => {
+                showModeSelection();
+            }, 2000);
+        };
+        
+        // Testar conexão básica com Lichess
+        async function testLichessConnection() {
+            try {
+                debugLog('Testando conexão com Lichess...');
+                const response = await fetch('https://lichess.org/api/stream/event', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'no-cors' // Teste simples sem CORS
+                }).catch(() => {});
+                
+                debugLog('Lichess está acessível');
+            } catch (error) {
+                debugLog('Erro ao testar conexão: ' + error.message);
+            }
+        }
+        
+        // Funções de debug
+        function debugLog(message) {
+            if (!debugEnabled) return;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            const debugContent = document.getElementById('debug-content');
+            const debugLine = document.createElement('div');
+            debugLine.className = 'debug-line';
+            debugLine.textContent = `[${timeStr}] ${message}`;
+            
+            debugContent.appendChild(debugLine);
+            debugContent.scrollTop = debugContent.scrollHeight;
+            
+            // Manter apenas últimos 20 logs
+            const lines = debugContent.children;
+            if (lines.length > 20) {
+                debugContent.removeChild(lines[0]);
+            }
+            
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        function toggleDebug() {
+            debugEnabled = !debugEnabled;
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.classList.toggle('active', debugEnabled);
+            debugLog(`Debug ${debugEnabled ? 'ativado' : 'desativado'}`);
+        }
+        
+        // Função auxiliar para fazer requisições com tratamento de erros
+        async function makeLichessRequest(url, options = {}) {
+            if (!lichessToken) {
+                throw new Error('Token não configurado');
+            }
+            
+            const defaultHeaders = {
+                'Authorization': `Bearer ${lichessToken}`,
+                'Accept': 'application/json'
+            };
+            
+            const requestOptions = {
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...options.headers
+                },
+                mode: 'cors'
+            };
+            
+            debugLog(`Fazendo requisição para: ${url}`);
+            debugLog(`Headers: ${JSON.stringify(requestOptions.headers)}`);
+            
+            try {
+                const response = await fetch(url, requestOptions);
+                
+                debugLog(`Resposta: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    let errorText = '';
+                    try {
+                        errorText = await response.text();
+                    } catch (e) {
+                        errorText = 'Não foi possível ler resposta';
+                    }
+                    
+                    debugLog(`Erro na resposta: ${errorText}`);
+                    
+                    if (response.status === 401) {
+                        throw new Error(`Token inválido ou expirado (401). Verifique seu token.`);
+                    } else if (response.status === 403) {
+                        throw new Error(`Permissão negada (403). Verifique os escopos do token.`);
+                    } else {
+                        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+                    }
+                }
+                
+                // Tentar parsear como JSON
+                try {
+                    const data = await response.json();
+                    return data;
+                } catch (e) {
+                    // Se não for JSON, retornar texto
+                    const text = await response.text();
+                    return text;
+                }
+                
+            } catch (error) {
+                debugLog(`Erro na requisição: ${error.message}`);
+                throw error;
+            }
+        }
+        
+        // Inicializar botões físicos
+        function initPhysicalButtons() {
+            const physicalBtns = document.querySelectorAll('.physical-btn');
+            physicalBtns.forEach((btn, index) => {
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handlePhysicalButton(index);
+                });
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handlePhysicalButton(index);
+                });
+            });
+        }
+        
+        // Manipular botões físicos
+        function handlePhysicalButton(buttonIndex) {
+            debugLog(`Botão físico: ${buttonIndex} (${BUTTON_CHARS[buttonIndex]}${BUTTON_NUMS[buttonIndex]})`);
+            
+            switch (currentState) {
+                case 'MODE_SELECTION':
+                    handleModeSelectionInput(buttonIndex);
+                    break;
+                case 'BOT_SELECTION':
+                    handleBotSelectionInput(buttonIndex);
+                    break;
+                case 'IN_GAME':
+                    handleGameInput(buttonIndex);
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        function handleModeSelectionInput(buttonIndex) {
+            if (buttonIndex === HUMAN_MODE_BUTTON) { // A1 - modo humano
+                selectHumanMode();
+            } else if (buttonIndex === BOT_MODE_BUTTON) { // E5 - modo bot
+                selectBotMode();
+            }
+        }
+        
+        function handleBotSelectionInput(buttonIndex) {
+            if (buttonIndex === SELECT_BOT_BUTTON) { // B2 - navegar bots
+                nextBot();
+            } else if (buttonIndex === START_GAME_BUTTON) { // C3 - iniciar jogo
+                startBotGame();
+            }
+        }
+        
+        function handleGameInput(buttonIndex) {
+            if (!gameActive || !isMyTurn) return;
+            
+            if (currentMove.length >= 4) {
+                if (buttonIndex === CLEAR_BUTTON) {
+                    currentMove = '';
+                    letterMode = true;
+                    updateMoveDisplay();
+                    debugLog('Lance limpo');
+                } else if (buttonIndex === CONFIRM_BUTTON) {
+                    debugLog(`Enviando lance: ${currentMove}`);
+                    sendMoveFromPhysical(currentMove);
+                    currentMove = '';
+                    letterMode = true;
+                }
+                return;
+            }
+            
+            let newChar;
+            if (letterMode) {
+                newChar = BUTTON_CHARS[buttonIndex].toLowerCase();
+            } else {
+                newChar = BUTTON_NUMS[buttonIndex];
+            }
+            
+            currentMove += newChar;
+            letterMode = !letterMode;
+            
+            updateMoveDisplay();
+            debugLog(`Movimento atual: ${currentMove}`);
+        }
+        
+        function updateMoveDisplay() {
+            document.getElementById('move-input').value = currentMove;
+            updateLCD('DIGITE LANCE:', currentMove.toUpperCase());
+        }
+        
+        async function sendMoveFromPhysical(move) {
+            const originalValue = document.getElementById('move-input').value;
+            document.getElementById('move-input').value = move;
+            await sendMove();
+            document.getElementById('move-input').value = originalValue;
+        }
+        
+        // Funções de LCD
+        function updateLCD(line1, line2) {
+            document.getElementById('lcd-line1').textContent = line1.substring(0, 16);
+            document.getElementById('lcd-line2').textContent = line2.substring(0, 16);
+        }
+        
+        // Funções de estado
+        function showModeSelection() {
+            currentState = 'MODE_SELECTION';
+            updateLCD('A1 HUMANO', 'E5 BOTS');
+            showElement('main-menu');
+            hideElement('bot-selection');
+            hideElement('game-controls');
+            hideElement('color-indicator');
+            setConnectionStatus('offline');
+        }
+        
+        function showBotSelection() {
+            const bot = availableBots[selectedBotIndex];
+            updateLCD(`BOT:${bot.displayName}`, `LV${bot.level} B2=NEXT C3=PLAY`);
+            hideElement('main-menu');
+            showElement('bot-selection');
+            hideElement('game-controls');
+            hideElement('color-indicator');
+        }
+        
+        function showGameControls() {
+            hideElement('main-menu');
+            hideElement('bot-selection');
+            showElement('game-controls');
+            document.getElementById('move-input').focus();
+        }
+        
+        function updateColorIndicator() {
+            showElement('color-indicator');
+            const whiteIndicator = document.getElementById('white-indicator');
+            const blackIndicator = document.getElementById('black-indicator');
+            
+            whiteIndicator.classList.remove('color-active');
+            blackIndicator.classList.remove('color-active');
+            
+            if (myColor === 'white') {
+                whiteIndicator.classList.add('color-active');
+            } else if (myColor === 'black') {
+                blackIndicator.classList.add('color-active');
+            }
+        }
+        
+        // Funções de modo de jogo
+        async function selectHumanMode() {
+            gameMode = 'HUMAN';
+            currentState = 'CREATING_GAME';
+            updateLCD('MODO: HUMANO', 'VERIFICANDO...');
+            setConnectionStatus('waiting');
+            
+            // Primeiro verificar se já existe uma partida em aberto
+            await checkAndResumeExistingGame();
+        }
+        
+        function selectBotMode() {
+            gameMode = 'BOT';
+            currentState = 'BOT_SELECTION';
+            showBotSelection();
+        }
+        
+        // Funções de bot
+        function nextBot() {
+            selectedBotIndex = (selectedBotIndex + 1) % availableBots.length;
+            showBotSelection();
+        }
+        
+        function previousBot() {
+            selectedBotIndex = (selectedBotIndex - 1 + availableBots.length) % availableBots.length;
+            showBotSelection();
+        }
+        
+        async function startBotGame() {
+            currentState = 'CREATING_GAME';
+            updateLCD('MODO: BOT', 'VERIFICANDO...');
+            setConnectionStatus('waiting');
+            
+            // Primeiro verificar se já existe uma partida em aberto
+            const existingGame = await checkAndResumeExistingGame();
+            
+            // Se não encontrou partida existente, criar nova
+            if (!existingGame) {
+                updateLCD('CRIANDO JOGO', 'CONTRA IA...');
+                setTimeout(() => {
+                    createBotGame();
+                }, 1000);
+            }
+        }
+        
+        // Funções de API do Lichess - REESCRITAS
+        async function getMyUserId() {
+            if (!lichessToken) {
+                updateLCD('ERRO:', 'CONFIG TOKEN!');
+                setTimeout(showModeSelection, 3000);
+                return null;
+            }
+            
+            try {
+                debugLog(`Tentando autenticar com token...`);
+                
+                const data = await makeLichessRequest('https://lichess.org/api/account');
+                
+                myUserId = data.id;
+                debugLog(`Autenticado como: ${myUserId}`);
+                updateLCD('CONECTADO COMO', myUserId.substring(0, 12));
+                setConnectionStatus('online');
+                return data.id;
+                
+            } catch (error) {
+                debugLog(`Erro ao obter ID: ${error.message}`);
+                updateLCD('ERRO CONEXAO', 'VERIFIQUE TOKEN');
+                setConnectionStatus('offline');
+                setTimeout(showModeSelection, 3000);
+                return null;
+            }
+        }
+        
+        async function checkAndResumeExistingGame() {
+            if (!lichessToken) {
+                return null;
+            }
+            
+            try {
+                updateLCD('VERIFICANDO', 'PARTIDA ABERTA...');
+                
+                // Primeiro obter o ID do usuário se ainda não tiver
+                if (!myUserId) {
+                    myUserId = await getMyUserId();
+                    if (!myUserId) return null;
+                }
+                
+                // Verificar partidas ativas
+                const games = await getCurrentGames();
+                
+                if (games && games.length > 0) {
+                    // Pegar a primeira partida ativa
+                    const activeGame = games[0];
+                    gameId = activeGame.gameId;
+                    
+                    // Determinar minha cor
+                    if (activeGame.color === 'white' || activeGame.color === 'black') {
+                        myColor = activeGame.color;
+                    } else {
+                        // Tentar determinar a cor pelo ID
+                        if (activeGame.white && activeGame.white.id === myUserId) {
+                            myColor = 'white';
+                        } else if (activeGame.black && activeGame.black.id === myUserId) {
+                            myColor = 'black';
+                        }
+                    }
+                    
+                    debugLog(`Partida encontrada: ${gameId}, Cor: ${myColor}`);
+                    updateLCD('PARTIDA ENCONTRADA', `JOGANDO ${myColor === 'white' ? 'BRANCAS' : 'PRETAS'}`);
+                    
+                    // Obter o estado completo da partida para pegar os lances
+                    const gameState = await getGameState(gameId);
+                    if (gameState && gameState.moves) {
+                        updateMoveHistory(gameState.moves);
+                    }
+                    
+                    currentState = 'IN_GAME';
+                    gameActive = true;
+                    showGameControls();
+                    updateColorIndicator();
+                    
+                    // Iniciar stream de eventos
+                    setTimeout(() => streamGameEvents(gameId), 1500);
+                    return true;
+                }
+                
+                debugLog('Nenhuma partida ativa encontrada');
+                return false;
+                
+            } catch (error) {
+                debugLog(`Erro ao verificar partidas: ${error.message}`);
+                return null;
+            }
+        }
+        
+        async function getCurrentGames() {
+            try {
+                debugLog('Buscando partidas ativas...');
+                const data = await makeLichessRequest('https://lichess.org/api/account/playing');
+                debugLog(`Partidas encontradas: ${data.nowPlaying ? data.nowPlaying.length : 0}`);
+                return data.nowPlaying || [];
+            } catch (error) {
+                debugLog(`Erro na requisição de partidas: ${error.message}`);
+                return [];
+            }
+        }
+        
+        async function getGameState(gameId) {
+            try {
+                debugLog(`Obtendo estado do jogo ${gameId}`);
+                const data = await makeLichessRequest(`https://lichess.org/api/board/game/${gameId}`);
+                debugLog(`Estado obtido, lances: ${data.moves ? data.moves.split(' ').length : 0}`);
+                return data;
+            } catch (error) {
+                debugLog(`Erro na requisição do estado: ${error.message}`);
+                return null;
+            }
+        }
+        
+        async function seekAndPlayGame() {
+            if (!myUserId) {
+                myUserId = await getMyUserId();
+                if (!myUserId) return;
+            }
+            
+            try {
+                updateLCD('CRIANDO BUSCA', 'POR OPONENTE...');
+                debugLog('Criando busca por oponente...');
+                
+                const response = await makeLichessRequest('https://lichess.org/api/board/seek', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'time=10&increment=5&rated=false&variant=standard'
+                });
+                
+                debugLog('Busca criada com sucesso');
+                updateLCD('BUSCA CRIADA!', 'AGUARDE OPONENTE');
+                
+                // Aguardar por partida
+                for (let i = 0; i < 30; i++) {
+                    updateLCD('AGUARDANDO', `OPONENTE ${30-i}S`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    let games = await getCurrentGames();
+                    if (games && games.length > 0) {
+                        const activeGame = games[0];
+                        gameId = activeGame.gameId;
+                        
+                        // Determinar minha cor
+                        if (activeGame.color === 'white' || activeGame.color === 'black') {
+                            myColor = activeGame.color;
+                        } else if (activeGame.white && activeGame.white.id === myUserId) {
+                            myColor = 'white';
+                        } else if (activeGame.black && activeGame.black.id === myUserId) {
+                            myColor = 'black';
+                        }
+                        
+                        debugLog(`Partida encontrada após busca: ${gameId}, Cor: ${myColor}`);
+                        updateLCD('PARTIDA', 'ENCONTRADA!');
+                        currentState = 'IN_GAME';
+                        gameActive = true;
+                        showGameControls();
+                        updateColorIndicator();
+                        
+                        // Obter o estado da partida
+                        const gameState = await getGameState(gameId);
+                        if (gameState && gameState.moves) {
+                            updateMoveHistory(gameState.moves);
+                        }
+                        
+                        setTimeout(() => streamGameEvents(gameId), 1500);
+                        return;
+                    }
+                }
+                
+                updateLCD('TIMEOUT', 'TENTE NOVAMENTE');
+                debugLog('Timeout na busca por oponente');
+                setTimeout(showModeSelection, 3000);
+                
+            } catch (error) {
+                debugLog(`Erro na busca: ${error.message}`);
+                updateLCD('ERRO BUSCA', error.message.substring(0, 16));
+                setTimeout(showModeSelection, 3000);
+            }
+        }
+        
+        async function createBotGame() {
+            if (!myUserId) {
+                myUserId = await getMyUserId();
+                if (!myUserId) return;
+            }
+            
+            const selectedBot = availableBots[selectedBotIndex];
+            
+            try {
+                debugLog(`Criando jogo contra bot: ${selectedBot.displayName} nível ${selectedBot.level}`);
+                updateLCD('CRIANDO JOGO', 'CONTRA IA...');
+                
+                const data = await makeLichessRequest('https://lichess.org/api/challenge/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `level=${selectedBot.level}&color=random&variant=standard`
+                });
+                
+                gameId = data.id;
+                
+                // Determinar minha cor a partir da resposta
+                if (data.color) {
+                    myColor = data.color;
+                } else {
+                    myColor = 'white'; // Padrão
+                }
+                
+                debugLog(`Jogo criado: ${gameId}, Cor: ${myColor}`);
+                updateLCD('JOGO CRIADO!', `${myColor === 'white' ? 'BRANCAS' : 'PRETAS'} VS ${selectedBot.displayName}`);
+                currentState = 'IN_GAME';
+                gameActive = true;
+                showGameControls();
+                updateColorIndicator();
+                setTimeout(() => streamGameEvents(gameId), 2000);
+                
+            } catch (error) {
+                debugLog(`Erro ao criar jogo: ${error.message}`);
+                updateLCD('ERRO CRIACAO', error.message.substring(0, 16));
+                setTimeout(showBotSelection, 3000);
+            }
+        }
+        
+        async function streamGameEvents(gameId) {
+            try {
+                setConnectionStatus('online');
+                updateLCD('CONECTANDO', 'STREAM...');
+                debugLog(`Iniciando stream para jogo ${gameId}`);
+                
+                const response = await fetch(`https://lichess.org/api/board/game/stream/${gameId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${lichessToken}`,
+                        'Accept': 'application/x-ndjson'
+                    },
+                    mode: 'cors'
+                });
+                
+                debugLog(`Status stream: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    debugLog(`Erro no stream: ${errorText}`);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                gameActive = true;
+                updateLCD('STREAM ATIVO!', `VS ${gameMode === 'BOT' ? 'IA' : 'HUMANO'}`);
+                debugLog('Stream iniciado com sucesso');
+                
+                while (gameActive) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        debugLog('Stream finalizado');
+                        break;
+                    }
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Manter a linha parcial
+                    
+                    for (const line of lines) {
+                        if (line.trim() && line.startsWith('{')) {
+                            debugLog(`Evento recebido: ${line.substring(0, 100)}...`);
+                            try {
+                                const event = JSON.parse(line);
+                                processGameEvent(event);
+                            } catch (e) {
+                                debugLog(`Erro ao parsear evento: ${e.message}`);
+                            }
+                        }
+                    }
+                }
+                
+                reader.releaseLock();
+            } catch (error) {
+                debugLog(`Erro no stream: ${error.message}`);
+                updateLCD('ERRO STREAM', error.message.substring(0, 16));
+                setConnectionStatus('offline');
+                setTimeout(showModeSelection, 3000);
+            }
+        }
+        
+        function processGameEvent(event) {
+            debugLog(`Tipo de evento: ${event.type}`);
+            
+            if (event.type === 'gameFull') {
+                debugLog('Evento gameFull recebido');
+                
+                // Determinar cor (se ainda não determinada)
+                if (!myColor) {
+                    if (event.white && event.black) {
+                        if (event.white.id === myUserId) {
+                            myColor = 'white';
+                        } else if (event.black.id === myUserId) {
+                            myColor = 'black';
+                        }
+                    }
+                    updateColorIndicator();
+                }
+                
+                debugLog(`Minha cor: ${myColor}`);
+                
+                // Processar estado inicial
+                if (event.state) {
+                    processGameState(event.state);
+                }
+                
+            } else if (event.type === 'gameState') {
+                debugLog('Evento gameState recebido');
+                processGameState(event);
+                
+            } else if (event.type === 'chatLine') {
+                debugLog(`[CHAT] ${event.username}: ${event.text}`);
+            } else if (event.type === 'gameFinish') {
+                debugLog(`Jogo finalizado: ${event.winner || 'empate'}`);
+            }
+        }
+        
+        function processGameState(state) {
+            debugLog(`Estado: ${state.status}, Moves: ${state.moves ? state.moves.split(' ').length : 0}`);
+            
+            // Verificar fim de jogo
+            if (state.status !== 'started' && state.status !== 'created') {
+                debugLog(`=== FIM DE JOGO: ${state.status} ===`);
+                gameActive = false;
+                
+                if (state.winner) {
+                    if (state.winner === myColor) {
+                        updateLCD('VOCE VENCEU!', 'A1/E5 NOVA PART.');
+                    } else {
+                        const opponent = gameMode === 'BOT' ? 'IA' : 'OPONENTE';
+                        updateLCD(`${opponent} VENCEU`, 'A1/E5 NOVA PART.');
+                    }
+                } else {
+                    updateLCD('EMPATE!', 'BOA PARTIDA!');
+                }
+                
+                setTimeout(showModeSelection, 5000);
+                return;
+            }
+            
+            // Atualizar histórico
+            if (state.moves) {
+                updateMoveHistory(state.moves);
+            }
+            
+            // Determinar turno
+            const moves = state.moves ? state.moves.split(' ').filter(m => m.length > 0) : [];
+            const moveCount = moves.length;
+            const whiteTurn = (moveCount % 2 === 0);
+            isMyTurn = (myColor === 'white' && whiteTurn) || (myColor === 'black' && !whiteTurn);
+            
+            if (isMyTurn) {
+                updateLCD('SUA VEZ!', 'SEU LANCE->');
+                document.getElementById('move-input').focus();
+                debugLog('==> É a sua vez de jogar!');
+            } else {
+                const opponent = gameMode === 'BOT' ? 'IA' : 'OPONENTE';
+                let lastMove = '';
+                if (moves.length > 0) {
+                    lastMove = moves[moves.length - 1];
+                }
+                
+                if (lastMove) {
+                    const prefix = gameMode === 'BOT' ? 'IA:' : 'OPP:';
+                    updateLCD(`${prefix}${lastMove}`, 'AGUARDE');
+                } else {
+                    updateLCD('AGUARDE', opponent);
+                }
+                debugLog(`Aguardando lance do ${opponent}...`);
+            }
+        }
+        
+        function updateMoveHistory(moves) {
+            if (!moves) {
+                moveHistory = [];
+                document.getElementById('move-list').textContent = 'Nenhum lance ainda';
+                return;
+            }
+            
+            moveHistory = moves.split(' ').filter(m => m.length > 0);
+            const moveListElement = document.getElementById('move-list');
+            
+            if (moveHistory.length === 0) {
+                moveListElement.textContent = 'Nenhum lance ainda';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 0; i < moveHistory.length; i += 2) {
+                const moveNumber = Math.floor(i / 2) + 1;
+                const whiteMove = moveHistory[i];
+                const blackMove = moveHistory[i + 1] || '';
+                
+                html += `<div class="move-pair">`;
+                html += `<span class="move-number">${moveNumber}.</span>`;
+                html += `<span class="move-white">${whiteMove}</span>`;
+                if (blackMove) {
+                    html += `<span class="move-black">${blackMove}</span>`;
+                }
+                html += `</div>`;
+            }
+            
+            moveListElement.innerHTML = html;
+            moveListElement.scrollTop = moveListElement.scrollHeight;
+        }
+        
+        // Funções de movimento
+        function handleMoveInput(event) {
+            if (event.key === 'Enter') {
+                sendMove();
+            }
+        }
+        
+        async function sendMove() {
+            const moveInput = document.getElementById('move-input');
+            const move = moveInput.value.trim().toLowerCase();
+            
+            if (!gameActive || !isMyTurn) {
+                updateLCD('ERRO:', 'NAO EH SUA VEZ');
+                setTimeout(() => {
+                    if (isMyTurn) {
+                        updateLCD('SUA VEZ!', 'SEU LANCE->');
+                    } else {
+                        const opponent = gameMode === 'BOT' ? 'IA' : 'OPONENTE';
+                        updateLCD('AGUARDE', opponent);
+                    }
+                }, 2000);
+                return;
+            }
+            
+            if (move.length < 4 || move.length > 5) {
+                updateLCD('ERRO:', 'LANCE INVALIDO');
+                setTimeout(() => {
+                    updateLCD('SUA VEZ!', 'SEU LANCE->');
+                }, 2000);
+                return;
+            }
+            
+            try {
+                updateLCD('ENVIANDO LANCE:', move.toUpperCase());
+                debugLog(`Enviando lance: ${move} para jogo ${gameId}`);
+                
+                await makeLichessRequest(`https://lichess.org/api/board/game/${gameId}/move/${move}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const opponent = gameMode === 'BOT' ? 'IA' : 'OPONENTE';
+                updateLCD('LANCE ACEITO!', `AGUARDE ${opponent}`);
+                isMyTurn = false;
+                moveInput.value = '';
+                currentMove = '';
+                letterMode = true;
+                debugLog('>> Lance aceito!');
+                
+            } catch (error) {
+                debugLog(`Erro ao fazer lance: ${error.message}`);
+                updateLCD('ERRO NO LANCE', error.message.substring(0, 16));
+                setTimeout(() => {
+                    updateLCD('SUA VEZ!', 'SEU LANCE->');
+                }, 3000);
+            }
+        }
+        
+        function clearMove() {
+            currentMove = '';
+            letterMode = true;
+            document.getElementById('move-input').value = '';
+            updateLCD('LANCE LIMPO', 'DIGITE LANCE:');
+            setTimeout(() => {
+                updateLCD('SUA VEZ!', 'SEU LANCE->');
+            }, 1000);
+        }
+        
+        async function resignGame() {
+            if (!gameId) {
+                updateLCD('ERRO:', 'SEM PARTIDA');
+                setTimeout(showModeSelection, 2000);
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja abandonar a partida?')) {
+                try {
+                    updateLCD('ABANDONANDO', 'PARTIDA...');
+                    debugLog(`Abandonando partida ${gameId}`);
+                    
+                    await makeLichessRequest(`https://lichess.org/api/board/game/${gameId}/resign`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    updateLCD('PARTIDA', 'ABANDONADA');
+                    debugLog('>> Partida abandonada com sucesso.');
+                    
+                } catch (error) {
+                    debugLog(`Erro ao abandonar: ${error.message}`);
+                    updateLCD('ERRO ABANDON.', error.message.substring(0, 16));
+                }
+                
+                // Limpar estado
+                gameId = '';
+                myColor = '';
+                isMyTurn = false;
+                gameActive = false;
+                moveHistory = [];
+                currentMove = '';
+                letterMode = true;
+                
+                setTimeout(showModeSelection, 2000);
+            }
+        }
+        
+        // Funções de interface
+        function backToMainMenu() {
+            if (gameActive) {
+                if (confirm('Uma partida está ativa. Deseja abandoná-la?')) {
+                    resignGame();
+                }
+            } else {
+                showModeSelection();
+            }
+        }
+        
+        function showStatus() {
+            let statusText = '';
+            switch (currentState) {
+                case 'MODE_SELECTION':
+                    statusText = 'MENU PRINCIPAL\nA1=HUMANO E5=BOT';
+                    break;
+                case 'BOT_SELECTION':
+                    const bot = availableBots[selectedBotIndex];
+                    statusText = `SELECAO BOT\n${bot.displayName} LV${bot.level}`;
+                    break;
+                case 'IN_GAME':
+                    if (gameId) {
+                        const modeStr = gameMode === 'BOT' ? 'BOT' : 'HUMANO';
+                        const turnInfo = isMyTurn ? 'SUA VEZ' : 'OPONENTE';
+                        const colorInfo = myColor === 'white' ? 'BRANCAS' : 'PRETAS';
+                        statusText = `MODO:${modeStr}\n${colorInfo} - ${turnInfo}`;
+                    } else {
+                        statusText = 'SEM PARTIDA\nVOLTANDO MENU';
+                        setTimeout(showModeSelection, 2000);
+                    }
+                    break;
+                default:
+                    statusText = 'ESTADO DESC.\nVOLTANDO MENU';
+                    setTimeout(showModeSelection, 2000);
+                    break;
+            }
+            
+            const lines = statusText.split('\n');
+            updateLCD(lines[0] || '', lines[1] || '');
+            
+            setTimeout(() => {
+                switch (currentState) {
+                    case 'MODE_SELECTION':
+                        showModeSelection();
+                        break;
+                    case 'BOT_SELECTION':
+                        showBotSelection();
+                        break;
+                    case 'IN_GAME':
+                        if (gameId) {
+                            if (isMyTurn) {
+                                updateLCD('SUA VEZ!', 'SEU LANCE->');
+                            } else {
+                                const opponent = gameMode === 'BOT' ? 'IA' : 'OPONENTE';
+                                updateLCD('AGUARDE', opponent);
+                            }
+                        }
+                        break;
+                }
+            }, 3000);
+        }
+        
+        // Funções de configuração
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.classList.toggle('active');
+            
+            if (panel.classList.contains('active')) {
+                updateLCD('CONFIGURACOES', 'TOKEN API');
+            } else {
+                switch (currentState) {
+                    case 'MODE_SELECTION':
+                        showModeSelection();
+                        break;
+                    case 'BOT_SELECTION':
+                        showBotSelection();
+                        break;
+                    default:
+                        showModeSelection();
+                        break;
+                }
+            }
+        }
+        
+        function saveToken() {
+            const tokenInput = document.getElementById('token-input');
+            const token = tokenInput.value.trim();
+            
+            if (!token.startsWith('lip_')) {
+                updateLCD('ERRO TOKEN:', 'DEVE COMEÇAR lip_');
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 2000);
+                return;
+            }
+            
+            if (token.length < 20) {
+                updateLCD('ERRO TOKEN:', 'MUITO CURTO');
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 2000);
+                return;
+            }
+            
+            lichessToken = token;
+            // Usar sessionStorage
+            sessionStorage.setItem('lichess_token', token);
+            debugLog(`Token salvo: ${token.substring(0, 10)}...`);
+            updateLCD('TOKEN SALVO!', 'NA SESSAO ATUAL');
+            
+            setTimeout(() => {
+                toggleSettings();
+            }, 2000);
+        }
+        
+        function loadToken() {
+            // Tenta sessionStorage primeiro
+            let savedToken = sessionStorage.getItem('lichess_token');
+            if (!savedToken) {
+                savedToken = localStorage.getItem('lichess_token');
+            }
+            
+            if (savedToken) {
+                lichessToken = savedToken;
+                document.getElementById('token-input').value = savedToken;
+                debugLog(`Token carregado: ${savedToken.substring(0, 10)}...`);
+            } else {
+                lichessToken = '';
+                document.getElementById('token-input').value = '';
+                debugLog('Nenhum token encontrado');
+            }
+        }
+        
+        function clearToken() {
+            if (confirm('Tem certeza que deseja limpar o token? Isso removerá o token apenas da sessão atual.')) {
+                lichessToken = '';
+                sessionStorage.removeItem('lichess_token');
+                localStorage.removeItem('lichess_token');
+                document.getElementById('token-input').value = '';
+                updateLCD('TOKEN LIMPO', 'CONFIGURE NOVO');
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 2000);
+            }
+        }
+        
+        async function testToken() {
+            const tokenInput = document.getElementById('token-input');
+            const token = tokenInput.value.trim();
+            
+            if (!token) {
+                updateLCD('ERRO:', 'TOKEN VAZIO');
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 2000);
+                return;
+            }
+            
+            if (!token.startsWith('lip_')) {
+                updateLCD('ERRO TOKEN:', 'DEVE COMEÇAR lip_');
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 2000);
+                return;
+            }
+            
+            updateLCD('TESTANDO', 'TOKEN...');
+            debugLog(`Testando token: ${token.substring(0, 10)}...`);
+            
+            // Testar temporariamente com o token fornecido
+            const tempToken = lichessToken;
+            lichessToken = token;
+            
+            try {
+                const data = await makeLichessRequest('https://lichess.org/api/account');
+                debugLog(`Token válido para usuário: ${data.id}`);
+                updateLCD('TOKEN OK!', `USER: ${data.id.substring(0, 12)}`);
+                
+                // Se funcionou, salvar o token
+                lichessToken = token;
+                sessionStorage.setItem('lichess_token', token);
+                
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 3000);
+                
+            } catch (error) {
+                debugLog(`Token inválido: ${error.message}`);
+                
+                // Restaurar token anterior
+                lichessToken = tempToken;
+                
+                if (error.message.includes('401')) {
+                    updateLCD('TOKEN INVALIDO', 'OU EXPIRADO');
+                } else {
+                    updateLCD('TOKEN INVALIDO', error.message.substring(0, 16));
+                }
+                setTimeout(() => {
+                    updateLCD('CONFIGURACOES', 'TOKEN API');
+                }, 3000);
+            }
+        }
+        
+        // Funções auxiliares
+        function showElement(elementId) {
+            document.getElementById(elementId).classList.remove('hidden');
+        }
+        
+        function hideElement(elementId) {
+            document.getElementById(elementId).classList.add('hidden');
+        }
+        
+        function setConnectionStatus(status) {
+            const indicator = document.getElementById('connection-status');
+            indicator.className = `status-indicator ${status}`;
+        }
+        
+        // Tratamento de erros globais
+        window.addEventListener('error', function(event) {
+            debugLog(`Erro global: ${event.error}`);
+            updateLCD('ERRO SISTEMA', 'RECARREGUE PAG.');
+        });
+        
+        // Atalho para debug (Ctrl+D)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                toggleDebug();
+            }
+        });
+        
+        console.log('=== LICHESS CHESS CLIENT v2.3 ===');
+        console.log('Para debug: pressione Ctrl+D');
+        debugLog('Sistema inicializado');
+        
+        // Verificação periódica de conexão
+        setInterval(() => {
+            if (gameActive && !gameId) {
+                debugLog('Estado inconsistente: jogo ativo sem ID');
+                gameActive = false;
+                showModeSelection();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
